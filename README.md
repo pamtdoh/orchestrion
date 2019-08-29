@@ -1,2 +1,2 @@
-# orchestrion
-midi player
+# Orchestrion
+Midi player

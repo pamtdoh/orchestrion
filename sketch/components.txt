@@ -1,0 +1,23 @@
+slave 1 -> [0, 1]
++ buzzer (0)
++ buzzer (1)
+
+slave 2 -> [2]
++ relay (2)
+
+slave 3 -> [3, 4, 5, 6]
++ stepper (3)
++ stepper (4)
++ stepper (5)
++ stepper (6)
+
+slave 4 -> [7]
++ glockenspiel (7)
+
+slave 5 -> [8, 9]
++ buzzer (8)
++ buzzer (9)
+
+slave 6 -> [10, 11]
++ speaker (10)
++ speaker (11)
