@@ -21,3 +21,47 @@ slave 5 -> [8, 9]
 slave 6 -> [10, 11]
 + speaker (10)
 + speaker (11)
+
+# slave comp config
++ type required
+type = i2c, then address, comp_id required
+
++ default
+single_note = false
+ignore_note_off = false
+melody = true
+note_range = 0-127
+
+[comp_buzzer_0]
+type = i2c
+address = 1
+comp_id = 0
+single_note = true
+note_range = 0-31
+
+[comp_buzzer_1]
+i2c_address = 1
+comp_id = 1
+single_note = true
+note_range = 32-63, 6, 9
+
+[2]
+    [2.0]
+    name = "comp_glock_0"
+    note_range = ["0-31"]
+    ignore_note_off = true
+
+[3]
+    [3.0]
+    name = "comp_glock_1"
+    note_range = ["32-63"]
+
+
+# instrument default config
+[ins_buzzer_0]
+categories = guitar, melody
+components = buzzer_0, buzzer_1
+
+[ins_glock_0]
+categories = melody
+components = glock_0_0, glock_0_1

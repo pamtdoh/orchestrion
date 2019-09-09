@@ -1,58 +1,69 @@
 import sys
+import time
 from mido import MidiFile
-from serial import Serial
-from time import time_ns
+from midi_processing import (
+    playing_channels, update_channel_map, group_messages
+)
+from parse import (
+    parse_component, parse_slave, parse_instrument
+)
+from instrument import InstrumentMap
 
-
-def note_octave(number):
-    octave = number // 12 - 1
-
-    note_symbols = ('C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B')
-    note = note_symbols[number % 12]
-
-    return note + str(octave)
+comp_config = 'comp.ini'
+slave_config = 'slave.ini'
+instrument_config = 'default.ini'
+test_midi = 'midi_files/Portal_Still-Alive_acoccimi.mid'
 
 if __name__ == '__main__':
-    if len(sys.argv) < 3:
-        print('Usage: ./player.py <port> <filename>')
+    if len(sys.argv) < 2:
+        print('Usage: ./player.py <filename>')
         sys.exit(1)
 
-    port = sys.argv[1]
-    filename = sys.argv[2]
-
     try:
+        # filename = sys.argv[1]
+        filename = test_midi
         midi_file = MidiFile(filename)
     except OSError:
         print(f'Could not open {filename}')
         sys.exit(2)
 
-    start = time_ns()
+    comp_dict = parse_component(comp_config)
+    slave_dict = parse_slave(slave_config)
+    instrument_dict = parse_instrument(instrument_config)
 
-    # channel_comp = {
-    #     0: [0, 3],
-    #     1: [1, 4],
-    #     2: [5],
-    #     3: [6],
-    #     9: [2]
-    # }
+    for comp in comp_dict.values():
+        slave = slave_dict[comp.slave_name]
+        slave.add_component(comp)
+        comp.set_slave(slave)
 
-    channel_comp = {
-        0: [3, 8, 9],
-        1: [4, 10, 11],
-        2: [5],
-        3: [6],
-        9: [2, 7]
-    }
+    for instrument in instrument_dict.values():
+        instrument.add_comps(comp_dict)
 
-    with Serial(port, 115200) as ser:
-        for message in midi_file.play():
-            print(message)
-            if message.type in ['note_on', 'note_off']:
-                op = b'\x01' if message.type == 'note_on' else b'\x00'
-                comp_ids = channel_comp.get(message.channel)
-                if comp_ids is not None:
-                    for comp_id in comp_ids:
-                        ser.write(op + bytes([comp_id, message.note]) + b'\x00')
-                        print(f'{comp_id}: {message.type} {message.channel} {message.note}')
+    # Currently supports only `note_on`, `note_off`, and
+    # `program_change` messages
+    midi_file = MidiFile(filename)
+    messages = [msg for msg in midi_file
+                if msg.type in ['note_on', 'note_off', 'program_change']]
+    messages = group_messages(messages)
 
-    print(time_ns() - start)
+    # Hold channel to prog and instrument to channel mapping
+    channels = playing_channels(midi_file)
+    channel_map = {channel: 0 for channel in channels}
+    instrument_map = InstrumentMap(instrument_dict, channel_map)
+
+    for grp in messages:
+        if grp.type == 'program_change':
+            update_channel_map(channel_map, grp.messages)
+            instrument_map.build()
+            print(channel_map)
+            print(instrument_map.mapping)
+        elif grp.type == 'note':
+            for message in grp.messages:
+                for inst in instrument_map.get(message.channel):
+                    if message.type == 'note_on':
+                        inst.note_on(message.note)
+                    else:
+                        inst.note_off(message.note)
+            for slave in slave_dict.values():
+                slave.send_commands()
+            print(f'wait: {grp.time}s')
