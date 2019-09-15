@@ -1,5 +1,8 @@
 from collections import defaultdict
 from functools import reduce
+from smbus2 import SMBus
+
+i2c_bus = SMBus(1)
 
 
 class Slave:
@@ -72,6 +75,8 @@ class Slave:
 
 
 class I2C_Slave(Slave):
+    MAX_BLOCK_SIZE = 32
+
     def __init__(self, name, type, address):
         super().__init__(name, type)
         self.address = address
@@ -88,4 +93,14 @@ class I2C_Slave(Slave):
         return f'<Slave {self.type}:{self.address} {self.name}>'
 
     def send_byte_stream(self, byte_stream):
-        print(f'{self.name}: {byte_stream}')
+        # print(f'{self.name}: {byte_stream}')
+        length = len(byte_stream)
+        for start in range(0, length, I2C_Slave.MAX_BLOCK_SIZE):
+            end = start + I2C_Slave.MAX_BLOCK_SIZE
+            if end > length:
+                end = length
+            i2c_bus.write_i2c_block_data(
+                self.address,
+                byte_stream[start],
+                byte_stream[start + 1:end]
+            )
