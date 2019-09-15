@@ -65,3 +65,4 @@ if __name__ == '__main__':
             for slave in slave_dict.values():
                 slave.send_commands()
             print(f'wait: {grp.time}s')
+            time.sleep(grp.time)

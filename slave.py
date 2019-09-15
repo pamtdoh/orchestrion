@@ -63,6 +63,7 @@ class Slave:
     def send_commands(self):
         self.optimize_commands()
         stream = self.cmd_stream()
+        print(f'{self.name}: {stream}')
         if stream:
             self.send_byte_stream(stream)
         self.empty_commands()
@@ -79,7 +80,7 @@ class I2C_Slave(Slave):
 
     def __init__(self, name, type, address):
         super().__init__(name, type)
-        self.address = address
+        self.address = int(address)
 
     @staticmethod
     def from_config(section):
@@ -102,5 +103,5 @@ class I2C_Slave(Slave):
             i2c_bus.write_i2c_block_data(
                 self.address,
                 byte_stream[start],
-                byte_stream[start + 1:end]
+                byte_stream[start+1 : end]
             )

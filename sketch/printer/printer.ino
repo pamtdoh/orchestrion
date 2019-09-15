@@ -5,11 +5,11 @@ class Printer : public Component {
 public:
     void note_on(byte note) {
         String s = "off ";
-        Serial.println(s + id + " " + int(note));
+        Serial.println(millis() + s + id + " " + int(note));
     }
     void note_off(byte note) {
         String s = "on ";
-        Serial.println(s + id + " " + int(note));
+        Serial.println(millis() + s + id + " " + int(note));
     }
 
     Printer(int id) : id(id) {
