@@ -12,7 +12,6 @@ from instrument import InstrumentMap
 comp_config = 'comp.ini'
 slave_config = 'slave.ini'
 instrument_config = 'default.ini'
-test_midi = 'midi_files/Portal_Still-Alive_acoccimi.mid'
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
@@ -20,8 +19,7 @@ if __name__ == '__main__':
         sys.exit(1)
 
     try:
-        # filename = sys.argv[1]
-        filename = test_midi
+        filename = sys.argv[1]
         midi_file = MidiFile(filename)
     except OSError:
         print(f'Could not open {filename}')
