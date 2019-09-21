@@ -11,6 +11,7 @@ class Slave:
         self.type = type
         self.components = {}
         self.cmd_buffer = defaultdict(list)
+        self.cmd_stream = b''
 
     @staticmethod
     def factory(section):
@@ -29,6 +30,7 @@ class Slave:
 
     def empty_commands(self):
         self.cmd_buffer = defaultdict(list)
+        self.cmd_stream = b''
 
     def optimize_commands(self):
         for comp_id in self.cmd_buffer:
@@ -49,8 +51,8 @@ class Slave:
 
             self.cmd_buffer[comp_id] = cmds
 
-    def cmd_stream(self):
-        return reduce(
+    def pack_stream(self):
+        self.cmd_stream = reduce(
             lambda x, y: x + y,
             [reduce(
                 lambda x, y: x + y,
@@ -62,16 +64,16 @@ class Slave:
 
     def send_commands(self):
         self.optimize_commands()
-        stream = self.cmd_stream()
-        print(f'{self.name}: {stream}')
-        if stream:
-            self.send_byte_stream(stream)
-        self.empty_commands()
+        self.pack_stream()
+        self.send_cmd_stream()
 
     def __str__(self):
         return self.name
 
-    def send_byte_stream(self, byte_stream):
+    def cmd_available(self):
+        return bool(self.cmd_buffer)
+
+    def send_cmd_stream(self):
         raise NotImplementedError
 
 
@@ -93,15 +95,14 @@ class I2C_Slave(Slave):
     def __repr__(self):
         return f'<Slave {self.type}:{self.address} {self.name}>'
 
-    def send_byte_stream(self, byte_stream):
-        # print(f'{self.name}: {byte_stream}')
-        length = len(byte_stream)
+    def send_cmd_stream(self):
+        length = len(self.cmd_stream)
         for start in range(0, length, I2C_Slave.MAX_BLOCK_SIZE):
             end = start + I2C_Slave.MAX_BLOCK_SIZE
             if end > length:
                 end = length
             i2c_bus.write_i2c_block_data(
                 self.address,
-                byte_stream[start],
-                byte_stream[start+1 : end]
+                self.cmd_stream[start],
+                self.cmd_stream[start + 1: end]
             )
