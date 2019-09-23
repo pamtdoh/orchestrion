@@ -62,10 +62,9 @@ class Slave:
             b''
         )
 
-    def send_commands(self):
+    def build_stream(self):
         self.optimize_commands()
         self.pack_stream()
-        self.send_cmd_stream()
 
     def __str__(self):
         return self.name

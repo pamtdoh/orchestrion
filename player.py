@@ -68,9 +68,14 @@ if __name__ == '__main__':
                     inst.note_off(message.note)
         for slave in slave_dict.values():
             if slave.cmd_available():
-                slave.send_commands()
-                print(f'{time.time() - start_time:7.3f}, {slave.name}: {slave.cmd_stream}')
-                time.sleep(settle_time)
+                slave.build_stream()
+                for attempts in range(3):
+                    try:
+                        print(f'{time.time() - start_time:7.3f}, {slave.name}: {slave.cmd_stream}')
+                        slave.send_cmd_stream()
+                        time.sleep(settle_time)
+                    except OSError as e:
+                        print(f'Send stream fail (attempt {attempts}): {e}')
                 slave.empty_commands()
 
     # Playing the midi
