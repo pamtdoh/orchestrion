@@ -73,7 +73,7 @@ if __name__ == '__main__':
                     try:
                         print(f'{time.time() - start_time:7.3f}, {slave.name}: {slave.cmd_stream}')
                         slave.send_cmd_stream()
-                        time.sleep(settle_time)
+                        break
                     except OSError as e:
                         print(f'Send stream fail (attempt {attempts}): {e}')
                 slave.empty_commands()
